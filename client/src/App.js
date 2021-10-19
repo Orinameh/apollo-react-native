@@ -5,30 +5,48 @@
  * @format
  * @flow strict-local
  */
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {persistCache, AsyncStorageWrapper} from 'apollo3-cache-persist';
+import {ApolloClient, ApolloProvider} from '@apollo/client';
 
 import {ProductsList} from './screens/ProductsList';
 import {ProductDetils} from './screens/ProductDetails';
-import {ApolloClient, ApolloProvider} from '@apollo/client';
 import {GRAPQL_URL} from './config';
 
 import {cache as cache_} from './graphql/cache';
 import {resolvers} from './graphql/resolvers';
 import {HeaderFavoriteProductCount} from './components/HeaderFavoriteProductCount';
+import {Loading} from './components/Loading';
 
 const Stack = createStackNavigator();
 
-const client_ = new ApolloClient({
-  uri: GRAPQL_URL,
-  cache: cache_,
-  resolvers,
-});
-
 const App = () => {
+  const [client, setClient] = useState(null);
+
+  useEffect(() => {
+    persistCache({
+      cache: cache_,
+      storage: new AsyncStorageWrapper(AsyncStorage),
+      trigger: 'background',
+    }).then(() => {
+      setClient(
+        new ApolloClient({
+          uri: GRAPQL_URL,
+          cache: cache_,
+          resolvers,
+        }),
+      );
+    });
+  }, []);
+
+  if (!client) {
+    return <Loading />;
+  }
   return (
-    <ApolloProvider client={client_}>
+    <ApolloProvider client={client}>
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{

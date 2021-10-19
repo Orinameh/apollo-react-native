@@ -5,7 +5,10 @@ export function Card({style, children, onPress}) {
   return (
     <Pressable
       onPress={onPress}
-      style={({pressed}) => [{opacity: pressed ? 0.7 : 1}, styles.card]}>
+      style={({pressed}) => [
+        {opacity: pressed ? 0.7 : 1},
+        {...styles.card, ...style},
+      ]}>
       {children}
     </Pressable>
   );
